@@ -1,8 +1,8 @@
 'use strict';
 
 // ===== Supabase 設定（README の手順で作成したプロジェクトの値を入れてください） =====
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_URL = 'https://hddqknaorkdylpbwketi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_AwJfFfMpMT-_vThxoGOwYA_fTlVa-d-';
 const db = SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
