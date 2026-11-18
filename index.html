@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麻雀点数管理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="topbar" class="topbar hidden">
+    <strong class="brand">🀄 麻雀点数管理</strong>
+    <div class="topbar-actions">
+      <span id="userLabel" class="user-label"></span>
+      <button id="statsButton" class="ghost-button">成績</button>
+      <button id="recordsButton" class="ghost-button">牌譜</button>
+      <button id="logoutButton" class="ghost-button">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ログイン / 新規登録 -->
+    <section id="authScreen" class="screen center-screen">
+      <form id="authForm" class="card" novalidate>
+        <h1>麻雀点数管理</h1>
+        <p class="card-lead">ニックネームとパスワードでログインします。<br>初めてのニックネームは、確認のうえ新規登録します。</p>
+        <label class="field">ニックネーム<input id="nickInput" maxlength="16" autocomplete="username" required></label>
+        <label class="field">パスワード（6文字以上）<input id="passInput" type="password" minlength="6" autocomplete="current-password" required></label>
+        <p id="authMessage" class="form-message" role="alert"></p>
+        <button id="authSubmit" class="primary-button wide" type="submit">ログイン ／ 新規登録</button>
+        <button id="guestButton" class="text-button" type="button">ログインせずに使う（牌譜は保存されません）</button>
+        <p id="authNote" class="form-note"></p>
+      </form>
+    </section>
+
+    <!-- プレイヤー設定 -->
+    <section id="setupScreen" class="screen center-screen hidden">
+      <form id="setupForm" class="card">
+        <h2>プレイヤー名</h2>
+        <p class="card-lead">東家が起家（最初の親）です。空欄の場合は「東家」などと表示します。<br>自分が座っている席に「自分」をチェックすると、成績に記録されます。</p>
+        <div class="seat-row"><label class="field">東家<input id="nameEast" maxlength="10" placeholder="東家"></label><label class="me-radio"><input type="radio" name="mySeat" id="meEast" value="east">自分</label></div>
+        <div class="seat-row"><label class="field">南家<input id="nameSouth" maxlength="10" placeholder="南家"></label><label class="me-radio"><input type="radio" name="mySeat" id="meSouth" value="south">自分</label></div>
+        <div class="seat-row"><label class="field">西家<input id="nameWest" maxlength="10" placeholder="西家"></label><label class="me-radio"><input type="radio" name="mySeat" id="meWest" value="west">自分</label></div>
+        <div class="seat-row"><label class="field">北家<input id="nameNorth" maxlength="10" placeholder="北家"></label><label class="me-radio"><input type="radio" name="mySeat" id="meNorth" value="north">自分</label></div>
+        <label class="me-radio me-none"><input type="radio" name="mySeat" id="meNone" value="">自分は参加しない（成績に記録しない）</label>
+        <button class="primary-button wide" type="submit">対局をはじめる</button>
+        <p class="form-note">雀魂ルール：25,000点持ち・30,000点返し／東南戦・西入あり・トビあり</p>
+      </form>
+    </section>
+
+    <!-- 対局 -->
+    <section id="gameScreen" class="screen game-screen hidden">
+      <div class="game-bar">
+        <span id="roundBadge" class="round-badge">東一局</span>
+        <div class="game-bar-actions">
+          <button id="undoButton" class="ghost-button">ひとつ戻す</button>
+          <button id="resetButton" class="ghost-button">最初から</button>
+        </div>
+      </div>
+
+      <!-- 反時計回りに 東→南→西→北（東家を手前に表示） -->
+      <section class="table-stage" aria-label="麻雀卓と4人の点数">
+        <div id="seatWest" class="seat-card seat-west"></div>
+        <div id="seatNorth" class="seat-card seat-north"></div>
+        <div class="mahjong-table">
+          <strong id="centerRound">東一局</strong>
+          <span id="centerInfo"></span>
+          <span id="centerSticks" class="center-sticks"></span>
+        </div>
+        <div id="seatSouth" class="seat-card seat-south"></div>
+        <div id="seatEast" class="seat-card seat-east"></div>
+      </section>
+
+      <div id="gameStatus" class="game-status" role="status"></div>
+
+      <section id="gameOverPanel" class="game-over hidden">
+        <h2>終局</h2>
+        <p id="gameOverMessage"></p>
+        <ol id="rankingList" class="ranking-list"></ol>
+        <p id="saveStatus" class="save-status" role="status"></p>
+        <div class="game-over-actions">
+          <button id="saveButton" class="primary-button">牌譜を保存</button>
+          <button id="newGameButton" class="secondary-button">新しい対局</button>
+        </div>
+      </section>
+
+      <div class="control-panel">
+        <button id="winButton" class="primary-button">和了</button>
+        <button id="riichiButton" class="secondary-button">リーチ</button>
+        <button id="callButton" class="secondary-button">鳴き（自分）</button>
+        <button id="drawButton" class="secondary-button">流局</button>
+      </div>
+
+      <section class="history-section">
+        <div class="section-heading"><h2>対局履歴</h2><span id="historyCount" class="history-count">0件</span></div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2 id="modalTitle"></h2>
+        <button id="closeModalButton" class="close-button" aria-label="閉じる">×</button>
+      </div>
+      <div id="modalContent" class="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
