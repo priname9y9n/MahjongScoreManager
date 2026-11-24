@@ -209,6 +209,7 @@ function renderGame() {
   $('callButton').classList.toggle('is-on', game.meCalled);
   $('callButton').textContent = game.meCalled ? '鳴き済み' : '鳴き（自分）';
   $('undoButton').disabled = !game.undo.length || game.saved || saving;
+  $('quitSaveButton').classList.toggle('hidden', !user || game.finished);
   $('gameStatus').textContent = game.status || '和了・リーチ・流局を入力して対局を進めてください。';
 
   $('gameOverPanel').classList.toggle('hidden', !game.finished);
@@ -273,13 +274,7 @@ function endHand(dealerStays) {
   else if (allLast && !dealerStays && max >= 30000) end = '南四局終了時に30,000点以上のプレイヤーがいるため、対局を終了します。';
 
   if (end) {
-    if (game.kyotaku) {
-      game.scores[top] += game.kyotaku * 1000;
-      end += ` 残りの供託${game.kyotaku}本はトップの${nm(top)}が受け取ります。`;
-      game.kyotaku = 0;
-    }
-    game.finished = true;
-    game.endMessage = game.status = end;
+    finishGame(end);
   } else {
     Object.assign(game, next);
     if (dealerStays) game.status = `${nm(game.parent)}（親）の連荘です。${roundLabel()}を続けます。`;
@@ -287,6 +282,29 @@ function endHand(dealerStays) {
     else game.status = `親が${nm(game.parent)}へ移動しました。次は${roundLabel()}です。`;
   }
   renderGame();
+}
+
+// 終局：残りの供託はトップが受け取る
+function finishGame(end) {
+  const top = ranking()[0];
+  if (game.kyotaku) {
+    game.scores[top] += game.kyotaku * 1000;
+    end += ` 残りの供託${game.kyotaku}本はトップの${nm(top)}が受け取ります。`;
+    game.kyotaku = 0;
+  }
+  game.riichi = [];
+  game.finished = true;
+  game.endMessage = game.status = end;
+}
+
+// 途中終了：現在の点数で終局して牌譜に保存
+function quitAndSave() {
+  if (!user || !db || game.finished || saving) return;
+  if (!window.confirm('現在の点数で対局を終了し、牌譜に保存しますか？\n（保存すると、この対局は続けられません）')) return;
+  closeModal();
+  snapshot();  // 保存に失敗したときは「ひとつ戻す」で対局に戻れる
+  finishGame(`${roundLabel()}で途中終了しました。`);
+  saveRecord();
 }
 
 // ===== モーダル =====
@@ -670,6 +688,7 @@ $('resetButton').addEventListener('click', () => {
 });
 $('newGameButton').addEventListener('click', goSetup);
 $('saveButton').addEventListener('click', saveRecord);
+$('quitSaveButton').addEventListener('click', quitAndSave);
 $('closeModalButton').addEventListener('click', closeModal);
 $('modalOverlay').addEventListener('click', (event) => { if (event.target === $('modalOverlay')) closeModal(); });
 $('modalContent').addEventListener('click', handleModalClick);
